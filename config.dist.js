@@ -2,7 +2,7 @@ module.exports = {
     port: 3000,
     credentials: {
         web: {
-            token: 'TOKEN',
+            token: 'AUTH_TOKEN',
         }
     },
     commandToRestart: "sh ./minecraft-server.sh restart",
