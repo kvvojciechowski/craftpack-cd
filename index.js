@@ -21,5 +21,5 @@ app.use("/", require("./src/route/modpack"));
 app.use("/api/pack", require("./src/route/pack"));
 
 app.listen(CONFIG.port, () => {
-    console.log('App listening on port 3000!');
+    console.log(`App listening on port ${CONFIG.port}!`);
 });

@@ -11,9 +11,10 @@ const exec = require("child_process").exec;
 
 /**
  * @param {Array<Promise>} args
+ * @returns {Promise}
  */
 function runBackgroundTasks(...args) {
-    Promise.all(args).catch((e) => console.log(e));
+    return Promise.all(args).catch((e) => console.log(e));
 }
 
 /**
