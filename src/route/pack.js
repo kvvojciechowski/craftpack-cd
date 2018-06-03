@@ -27,15 +27,15 @@ function decompressPack(file, output, filter = () => true) {
 /**
  * @returns {Promise}
  */
-function decompressClientPack({archiveFile, hash, type}) {
-    return decompressPack(archiveFile, `${CONFIG.paths.extracts[type]}/${hash}`, ({path}) => new RegExp('(^.*(([a-z\\d]){2}\\/){2}(([a-z\\d]){1,}|)$)|(.*.json$)|(libraries\\/.*$)').test(path));
+function decompressClientPack({archiveFile, type}) {
+    return decompressPack(archiveFile, `${CONFIG.paths.deploy[type]}`, ({path}) => new RegExp('(^.*(([a-z\\d]){2}\\/){2}(([a-z\\d]){1,}|)$)|(.*.json$)|(libraries\\/.*$)').test(path));
 }
 
 /**
  * @returns {Promise}
  */
-function decompressServerPack({archiveFile, hash, type}) {
-    return decompressPack(archiveFile, `${CONFIG.paths.extracts[type]}/${hash}`, ({path}) => new RegExp('(^config\\/.*)|(^mods\\/.*.jar$)|(^scripts\\/.*.zs$)').test(path));
+function decompressServerPack({archiveFile, type}) {
+    return decompressPack(archiveFile, `${CONFIG.paths.deploy[type]}`, ({path}) => new RegExp('(^config\\/.*)|(^mods\\/.*.jar$)|(^scripts\\/.*.zs$)').test(path));
 }
 
 function prepareRelease(type, name, file) {
