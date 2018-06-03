@@ -21,7 +21,7 @@ function runBackgroundTasks(...args) {
  * @returns {Promise}
  */
 function decompressPack(file, output, filter = () => true) {
-    return decompress(file, output, {filter});
+    return decompress(file, output/*, {filter}*/);
 }
 
 /**
@@ -35,7 +35,7 @@ function decompressClientPack({file, hash, type}) {
  * @returns {Promise}
  */
 function decompressServerPack({file, hash, type}) {
-    return decompressPack(file, `${CONFIG.paths.extracts[type]}/${hash}`/*, ({path}) => new RegExp('(^config\\/.*)|(^mods\\/.*.jar$)|(^scripts\\/.*.zs$)').test(path)*/);
+    return decompressPack(file, `${CONFIG.paths.extracts[type]}/${hash}`, ({path}) => new RegExp('(^config\\/.*)|(^mods\\/.*.jar$)|(^scripts\\/.*.zs$)').test(path));
 }
 
 function prepareRelease(type, name, file) {
