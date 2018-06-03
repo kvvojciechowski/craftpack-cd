@@ -70,7 +70,7 @@ function checkReleaseExistence() {
     }
 }
 
-function checkReleaseUniquess(type) {
+function checkReleaseUniqueness(type) {
     return function (req, res, next) {
         const release = database.get("releases").find({type, name: req.query.release}).value();
         if (!release) {
@@ -82,7 +82,7 @@ function checkReleaseUniquess(type) {
     }
 }
 
-router.post('/new/client', upload.single('modpack'), checkReleaseExistence(), checkReleaseUniquess("client"), (req, res) => {
+router.post('/new/client', upload.single('modpack'), checkReleaseExistence(), checkReleaseUniqueness("client"), (req, res) => {
     runBackgroundTasks([decompressClientPack(req.release), cleanUploadFile(req.release.file), markReleaseAsReady("client", req.release)]).then(() => {
         res.sendStatus(204).end();
     }).catch((e) => {
@@ -91,7 +91,7 @@ router.post('/new/client', upload.single('modpack'), checkReleaseExistence(), ch
     })
 });
 
-router.post('/new/server', upload.single("modpack"), checkReleaseExistence(), checkReleaseUniquess("server"), (req, res) => {
+router.post('/new/server', upload.single("modpack"), checkReleaseExistence(), checkReleaseUniqueness("server"), (req, res) => {
     runBackgroundTasks([decompressServerPack(req.release), cleanUploadFile(req.release.file), markReleaseAsReady("server", req.release)]).then(() => {
         res.sendStatus(204).end();
     }).catch((e) => {
@@ -131,12 +131,8 @@ router.post("/deploy", checkReleaseExistence(), (req, res) => {
                 resolve(stdout);
             })
         })
-    ).then(([, , , result]) => {
-        if (result === "Command executed") {
-            res.sendStatus(204).end();
-            return;
-        }
-        res.status(500).send("Failed to accomplish task");
+    ).then(() => {
+        res.sendStatus(204).end();
     }).catch((e) => {
         res.sendStatus(500).end();
         console.log(e);
