@@ -1,0 +1,6 @@
+node_modules
+deploy
+extracts
+uploads
+.idea
+src/data.json
