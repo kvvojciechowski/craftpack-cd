@@ -27,15 +27,15 @@ function decompressPack(file, output, filter = () => true) {
 /**
  * @returns {Promise}
  */
-function decompressClientPack({file, hash, type}) {
-    return decompressPack(file, `${CONFIG.paths.extracts[type]}/${hash}`, ({path}) => new RegExp('(^.*(([a-z\\d]){2}\\/){2}(([a-z\\d]){1,}|)$)|(.*.json$)|(libraries\\/.*$)').test(path));
+function decompressClientPack({archiveFile, hash, type}) {
+    return decompressPack(archiveFile, `${CONFIG.paths.extracts[type]}/${hash}`, ({path}) => new RegExp('(^.*(([a-z\\d]){2}\\/){2}(([a-z\\d]){1,}|)$)|(.*.json$)|(libraries\\/.*$)').test(path));
 }
 
 /**
  * @returns {Promise}
  */
-function decompressServerPack({file, hash, type}) {
-    return decompressPack(file, `${CONFIG.paths.extracts[type]}/${hash}`, ({path}) => new RegExp('(^config\\/.*)|(^mods\\/.*.jar$)|(^scripts\\/.*.zs$)').test(path));
+function decompressServerPack({archiveFile, hash, type}) {
+    return decompressPack(archiveFile, `${CONFIG.paths.extracts[type]}/${hash}`, ({path}) => new RegExp('(^config\\/.*)|(^mods\\/.*.jar$)|(^scripts\\/.*.zs$)').test(path));
 }
 
 function prepareRelease(type, name, file) {
@@ -51,8 +51,8 @@ function prepareRelease(type, name, file) {
     return releaseData;
 }
 
-function markReleaseAsReady(type, release) {
-    database.get("releases").find({type, hash: release.hash}).assign({status: "ready"}).write();
+function markReleaseAsReady(type, release, archiveFile) {
+    database.get("releases").find({type, hash: release.hash}).assign({status: "ready", archiveFile}).write();
     return Promise.resolve();
 }
 
@@ -83,7 +83,7 @@ function checkReleaseUniqueness(type) {
 }
 
 router.post('/new/client', upload.single('modpack'), checkReleaseExistence(), checkReleaseUniqueness("client"), (req, res) => {
-    runBackgroundTasks([decompressClientPack(req.release), cleanUploadFile(req.release.file), markReleaseAsReady("client", req.release)]).then(() => {
+    runBackgroundTasks([markReleaseAsReady("client", req.release, req.release.file)]).then(() => {
         res.sendStatus(204).end();
     }).catch((e) => {
         console.log(e);
@@ -92,7 +92,7 @@ router.post('/new/client', upload.single('modpack'), checkReleaseExistence(), ch
 });
 
 router.post('/new/server', upload.single("modpack"), checkReleaseExistence(), checkReleaseUniqueness("server"), (req, res) => {
-    runBackgroundTasks([decompressServerPack(req.release), cleanUploadFile(req.release.file), markReleaseAsReady("server", req.release)]).then(() => {
+    runBackgroundTasks([markReleaseAsReady("server", req.release, req.release.file)]).then(() => {
         res.sendStatus(204).end();
     }).catch((e) => {
         console.log(e);
@@ -101,21 +101,24 @@ router.post('/new/server', upload.single("modpack"), checkReleaseExistence(), ch
 });
 
 router.post("/deploy", checkReleaseExistence(), (req, res) => {
-    let releases = database.get("releases").filter({name: req.query.release, status: "ready"}).value();
-    if (releases.length !== 2) {
+    let releases = database.get("releases").filter({name: req.query.release, status: "ready"});
+    if (releases.value().length !== 2) {
         res.status(403).send("Releases packages are not ready").end();
         return;
     }
 
+    const clientPack = releases.filter({type: "client"}).first().value();
+    const serverPack = releases.filter({type: "server"}).first().value();
+
     // Start background tasks
     runBackgroundTasks(
         Promise.all([
-            fse.copy(`${CONFIG.paths.extracts.client}/${releases[0].hash}`, `${CONFIG.paths.deploy.client}`, {overwrite: true}),
-            fse.copy(`${CONFIG.paths.extracts.server}/${releases[0].hash}`, `${CONFIG.paths.deploy.server}`, {overwrite: true})
+            decompressServerPack(serverPack),
+            decompressClientPack(clientPack)
         ]),
         Promise.all([
-            fse.remove(`${CONFIG.paths.extracts.client}/${releases[0].hash}`),
-            fse.remove(`${CONFIG.paths.extracts.server}/${releases[0].hash}`)
+            cleanUploadFile(serverPack.archiveFile),
+            cleanUploadFile(clientPack.archiveFile)
         ]),
         new Promise((resolve) => {
             database.get("releases").find({name: req.query.release, type: "client"}).assign({status: "done"}).write();
