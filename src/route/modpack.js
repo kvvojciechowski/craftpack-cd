@@ -11,7 +11,7 @@ router.get("/packages.php", (req, res) => {
         status: "done"
     }).sortBy("created").first().value();
 
-    if (lastRelease.length === 0) {
+    if (!lastRelease) {
         res.sendStatus(404);
         return;
     }
