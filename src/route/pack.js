@@ -113,6 +113,10 @@ router.post("/deploy", checkReleaseExistence(), (req, res) => {
     // Start background tasks
     runBackgroundTasks(
         Promise.all([
+            fse.remove(CONFIG.paths.deploy.client),
+			fse.remove(CONFIG.paths.deploy.server),
+        ]),
+        Promise.all([
             decompressServerPack(serverPack),
             decompressClientPack(clientPack)
         ]),
