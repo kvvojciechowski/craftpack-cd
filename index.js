@@ -1,25 +1,25 @@
 const express = require('express');
 const app = express();
-const CONFIG = require("./config");
+const CONFIG = require('./config');
 
-app.set("x-powered-by", false);
+app.set('x-powered-by', false);
 
-['libraries', 'objects', "modpack.json"].forEach((p) => {
-    app.use(`/${p}`, express.static(`${CONFIG.paths.deploy.client}/${p}`));
+['libraries', 'objects', 'modpack.json', 'download'].forEach((p) => {
+	app.use(`/${p}`, express.static(`${CONFIG.paths.deploy.client}/${p}`));
 });
 
-app.all("/api/*", (req, res, next) => {
-    if (req.header("X-Token") === CONFIG.credentials.web.token) {
-        next();
-        return;
-    }
+app.all('/api/*', (req, res, next) => {
+	if (req.header('X-Token') === CONFIG.credentials.web.token) {
+		next();
+		return;
+	}
 
-    res.sendStatus(403).end();
+	res.sendStatus(403).end();
 });
 
-app.use("/", require("./src/route/modpack"));
-app.use("/api/pack", require("./src/route/pack"));
+app.use('/', require('./src/route/modpack'));
+app.use('/api/pack', require('./src/route/pack'));
 
 app.listen(CONFIG.port, () => {
-    console.log(`App listening on port ${CONFIG.port}!`);
+	console.log(`App listening on port ${CONFIG.port}!`);
 });
